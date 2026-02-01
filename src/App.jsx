@@ -1,115 +1,110 @@
 import "./App.css";
 import { makeShuffledDeck } from "./utils.jsx";
 import { useState } from "react";
+import CardDealer from "./Components/CardDealer.jsx";
+import PlayingCard from "./Components/PlayingCard.jsx";
+import ScoreBoard from "./Components/ScoreBoard.jsx";
 
 function App(props) {
   // Set default value of card deck to new shuffled deck
   const [cardDeck, setCardDeck] = useState(makeShuffledDeck());
-  // currCards holds the cards from the current round
-  const [currCards, setCurrCards] = useState([]);
-
-  //Scores state
-  const [score1, setScore1] = useState(0);
-  const [score2, setScore2] = useState(0);
-  const [win1, setWin1] = useState(0);
-  const [win2, setWin2] = useState(0);
-
   const [gameState, setGameState] = useState("Deal Cards To Start The Game");
+  const [gameEnded, setGameEnded] = useState(false);
+  const [players, setPlayers] = useState([
+    { id: 1, name: "Player 1", score: 0, wins: 0, currentCard: null },
+    { id: 2, name: "Player 2", score: 0, wins: 0, currentCard: null },
+    { id: 3, name: "Player 3", score: 0, wins: 0, currentCard: null },
+    { id: 4, name: "Player 4", score: 0, wins: 0, currentCard: null },
+  ]);
 
   //Assign each player a card
   const dealCards = () => {
-    if (cardDeck.length < 4) {
-      setGameState("Game Over, Play Again"); //replace with button and message to play again and which player won the game by tracking the one with the biggest score that game
+    if (cardDeck.length < players.length) {
+      //Find the top score
+      const topScore = Math.max(...players.map((p) => p.score));
+
+      //Find all players who reached that score
+      const winners = players.filter((p) => p.score === topScore);
+
+      //Update the wins
+      setPlayers((prev) =>
+        prev.map((player) =>
+          player.score === topScore
+            ? { ...player, wins: player.wins + 1 }
+            : player,
+        ),
+      );
+
+      //If theres 2 winners its a draw
+      if (winners.length > 1) {
+        setGameState(
+          `Game Over! It's a Draw between ${winners.map((w) => w.name).join(" & ")}`,
+        );
+      } else {
+        setGameState(`Game Over! ${winners[0].name} Won the Game!`);
+      }
+      setGameEnded(true);
+      return;
     }
 
     const newDeck = [...cardDeck];
-    const card1 = newDeck.pop();
-    const card2 = newDeck.pop();
-    const newCurrCards = [card1, card2];
+    const updatedPlayers = players.map((player) => ({
+      ...player,
+      currentCard: newDeck.pop(),
+    }));
 
-    setCurrCards(newCurrCards);
+    //Check winner of the round
+    const maxRank = Math.max(
+      ...updatedPlayers.map((player) => player.currentCard.rank),
+    );
+    const roundWinners = updatedPlayers.filter(
+      (player) => player.currentCard.rank === maxRank,
+    );
+
+    //Increase the round score of the player if he has max card
+    setPlayers(
+      updatedPlayers.map((player) =>
+        player.currentCard.rank === maxRank
+          ? { ...player, score: player.score + 1 }
+          : player,
+      ),
+    );
+
+    //Update states
     setCardDeck(newDeck);
-
-    //Check winner of the game
-    if (cardDeck.length < 4) {
-      score1 > score2
-        ? setWin1((prevWin) => prevWin + 1)
-        : setWin2((prevWin) => prevWin + 1);
-    }
-
-    //Check who won the round
-    if (card1.rank === card2.rank) {
-      setGameState("It's A Draw!");
-    } else if (card1.rank > card2.rank) {
-      setScore1((prevScore) => (prevScore += 1));
-      setGameState("Player 1 Won The Round");
-    } else {
-      setScore2((prevScore) => (prevScore += 1));
-      setGameState("Player 2 Won The Round");
-    }
+    //If theres more than 1 player in the winners array its a tie else he won the round
+    setGameState(
+      roundWinners.length > 1
+        ? "It's A Tie"
+        : `${roundWinners[0].name} Won The Round`,
+    );
   };
 
   const playAgain = () => {
     setCardDeck(makeShuffledDeck());
-    setCurrCards([]);
-    setScore1(0);
-    setScore2(0);
-    setGameState("Deal Cards To Start The Game");
+    setPlayers((prev) =>
+      prev.map((p) => ({ ...p, score: 0, currentCard: null })),
+    );
+    setGameEnded(false);
+    setGameState("New Game Started!");
   };
-
-  // You can access your current components state here, as indicated below
-  const currCardElems = currCards.map(({ name, suit }) => (
-    // Give each list element a unique key
-    <div key={`${name}${suit}`}>
-      {name} of {suit}
-    </div>
-  ));
 
   return (
     <>
       <div className="card">
         <h2>React High Card Game🚀</h2>
-        <h3>Player 1 Card: {currCardElems[0]}</h3>
-        <h3>Player 2 Card: {currCardElems[1]}</h3>
+        <PlayingCard players={players} />
         <br />
-        <button
-          onClick={dealCards}
-          disabled={cardDeck.length < 2}
-          hidden={cardDeck.length < 2}
-        >
-          Deal
-        </button>
-        <button
-          onClick={playAgain}
-          disabled={cardDeck.length >= 2}
-          hidden={cardDeck.length >= 2}
-        >
-          Play Again
-        </button>
-
-        <h2>{gameState}</h2>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Players</th>
-              <th>Round Score</th>
-              <th>Games Won</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Player 1</td>
-              <td>{score1}</td>
-              <td>{win1}</td>
-            </tr>
-            <tr>
-              <td>Player 2</td>
-              <td>{score2}</td>
-              <td>{win2}</td>
-            </tr>
-          </tbody>
-        </table>
+        <CardDealer
+          dealCards={dealCards}
+          playAgain={playAgain}
+          deckCount={cardDeck.length}
+          playerCount={players.length}
+          gameState={gameState}
+          gameEnded={gameEnded}
+        />
+        <br />
+        <ScoreBoard players={players} />
       </div>
     </>
   );
