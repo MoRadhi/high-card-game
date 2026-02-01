@@ -1,3 +1,5 @@
+import { Box, Button, Typography, Chip } from "@mui/material";
+
 const CardDealer = ({
   dealCards,
   playAgain,
@@ -7,26 +9,45 @@ const CardDealer = ({
   gameEnded,
 }) => {
   return (
-    <div className="dealer-container">
-      <h2>{gameState}</h2>
+    <Box sx={{ textAlign: "center", my: 4 }}>
+      <Typography
+        variant="h5"
+        gutterBottom
+        sx={{ fontWeight: "bold", letterSpacing: 1 }}
+      >
+        {gameState.toUpperCase()}
+      </Typography>
 
-      <div className="button-group">
-        {/* Only show Play Again if the game is officially ended */}
+      <Box sx={{ display: "flex", gap: 2, justifyContent: "center", mb: 2 }}>
         {!gameEnded ? (
-          <button onClick={dealCards} className="btn btn-primary">
-            {deckCount < playerCount
-              ? "Finish Game & See Winner"
-              : `Deal Cards (${deckCount} left)`}
-          </button>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={dealCards}
+            color="primary"
+            sx={{ px: 4 }}
+          >
+            {deckCount < playerCount ? "FINISH GAME" : `DEAL (${deckCount})`}
+          </Button>
         ) : (
-          <button onClick={playAgain} className="btn btn-success">
-            Play Again
-          </button>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={playAgain}
+            color="secondary"
+            sx={{ px: 4 }}
+          >
+            PLAY AGAIN
+          </Button>
         )}
-      </div>
+      </Box>
 
-      <p>Playing with {playerCount} players</p>
-    </div>
+      <Chip
+        label={`Active Players: ${playerCount}`}
+        variant="outlined"
+        sx={{ color: "grey.500" }}
+      />
+    </Box>
   );
 };
 

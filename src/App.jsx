@@ -1,4 +1,11 @@
 import "./App.css";
+import {
+  ThemeProvider,
+  CssBaseline,
+  Container,
+  Typography,
+} from "@mui/material";
+import { gameTheme } from "./themes/gameTheme.js";
 import { makeShuffledDeck } from "./utils.jsx";
 import { useState } from "react";
 import CardDealer from "./Components/CardDealer.jsx";
@@ -11,10 +18,10 @@ function App(props) {
   const [gameState, setGameState] = useState("Deal Cards To Start The Game");
   const [gameEnded, setGameEnded] = useState(false);
   const [players, setPlayers] = useState([
-    { id: 1, name: "Player 1", score: 0, wins: 0, currentCard: null },
-    { id: 2, name: "Player 2", score: 0, wins: 0, currentCard: null },
-    { id: 3, name: "Player 3", score: 0, wins: 0, currentCard: null },
-    { id: 4, name: "Player 4", score: 0, wins: 0, currentCard: null },
+    { id: 1, name: "Charlie", score: 0, wins: 0, currentCard: null },
+    { id: 2, name: "Adam", score: 0, wins: 0, currentCard: null },
+    { id: 3, name: "Nick", score: 0, wins: 0, currentCard: null },
+    { id: 4, name: "Fred", score: 0, wins: 0, currentCard: null },
   ]);
 
   //Assign each player a card
@@ -47,6 +54,7 @@ function App(props) {
       return;
     }
 
+    //Deal a card to each player
     const newDeck = [...cardDeck];
     const updatedPlayers = players.map((player) => ({
       ...player,
@@ -61,7 +69,7 @@ function App(props) {
       (player) => player.currentCard.rank === maxRank,
     );
 
-    //Increase the round score of the player if he has max card
+    //Increase the round score of the player if he has max card rank
     setPlayers(
       updatedPlayers.map((player) =>
         player.currentCard.rank === maxRank
@@ -80,6 +88,7 @@ function App(props) {
     );
   };
 
+  //Reset everything
   const playAgain = () => {
     setCardDeck(makeShuffledDeck());
     setPlayers((prev) =>
@@ -91,21 +100,29 @@ function App(props) {
 
   return (
     <>
-      <div className="card">
-        <h2>React High Card Game🚀</h2>
-        <PlayingCard players={players} />
-        <br />
-        <CardDealer
-          dealCards={dealCards}
-          playAgain={playAgain}
-          deckCount={cardDeck.length}
-          playerCount={players.length}
-          gameState={gameState}
-          gameEnded={gameEnded}
-        />
-        <br />
-        <ScoreBoard players={players} />
-      </div>
+      <ThemeProvider theme={gameTheme}>
+        <CssBaseline /> {/* This sets the background color globally */}
+        <Container maxWidth="md" sx={{ py: 5 }}>
+          <Typography
+            variant="h3"
+            align="center"
+            sx={{ color: "primary.main", mb: 4, fontWeight: "bold" }}
+          >
+            HIGH CARD GAME🚀
+          </Typography>
+
+          <PlayingCard players={players} />
+          <CardDealer
+            dealCards={dealCards}
+            playAgain={playAgain}
+            deckCount={cardDeck.length}
+            playerCount={players.length}
+            gameState={gameState}
+            gameEnded={gameEnded}
+          />
+          <ScoreBoard players={players} />
+        </Container>
+      </ThemeProvider>
     </>
   );
 }
